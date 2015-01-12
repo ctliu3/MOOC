@@ -1,4 +1,7 @@
 *.zip
 *.mat
 *.swp
+*.class
+*.jar
+target/
 *~

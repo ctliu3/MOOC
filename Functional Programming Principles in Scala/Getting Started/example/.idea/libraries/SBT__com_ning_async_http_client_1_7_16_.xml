@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="SBT: com.ning:async-http-client:1.7.16:">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib_managed/jars/com.ning/async-http-client/async-http-client-1.7.16.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
