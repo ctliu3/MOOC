@@ -72,9 +72,7 @@ def affine_backward(dout, cache):
   for c in range(M):
       for i in range(D):
           dw[i][c] = sum(x[:, i] * dout[:, c])
-  db = np.ones(M)
-  for i in range(M):
-      db[i] = sum(dout[:, i])
+  db = np.sum(dout, axis=0)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -567,9 +565,14 @@ def softmax_loss(x, y):
   - loss: Scalar giving the loss
   - dx: Gradient of the loss with respect to x
   """
+  # This implementation is the same as caffe's softmax_loss layer
+  # to avoid overflow, check here from more details
+  # http://freemind.pluskid.org/machine-learning/softmax-vs-softmax-loss-numerical-stability/
   probs = np.exp(x - np.max(x, axis=1, keepdims=True))
   probs /= np.sum(probs, axis=1, keepdims=True)
+
   N = x.shape[0]
+  # cross entropy
   loss = -np.sum(np.log(probs[np.arange(N), y])) / N
   dx = probs.copy()
   dx[np.arange(N), y] -= 1

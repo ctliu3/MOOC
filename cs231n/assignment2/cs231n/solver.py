@@ -113,6 +113,7 @@ class Solver(object):
     self.batch_size = kwargs.pop('batch_size', 100)
     self.num_epochs = kwargs.pop('num_epochs', 10)
 
+    self.test_every_iter = kwargs.pop('test_every_iter', 20)
     self.print_every = kwargs.pop('print_every', 10)
     self.verbose = kwargs.pop('verbose', True)
 
@@ -243,7 +244,7 @@ class Solver(object):
       # iteration, and at the end of each epoch.
       first_it = (t == 0)
       last_it = (t == num_iterations + 1)
-      if first_it or last_it or epoch_end:
+      if first_it or last_it or epoch_end or t % self.test_every_iter == 0:
         train_acc = self.check_accuracy(self.X_train, self.y_train,
                                         num_samples=1000)
         val_acc = self.check_accuracy(self.X_val, self.y_val)
