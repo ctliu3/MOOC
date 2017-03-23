@@ -96,7 +96,7 @@ ENV/
 *.zip
 *.csv
 *.mat
-*.swp
+*.sw[onp]
 *.pdf
 *.class
 *.jar
