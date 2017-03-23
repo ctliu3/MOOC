@@ -120,6 +120,21 @@ class TwoLayerNet(object):
 
     return loss, grads
 
+def affine_bn_relu_forward(x, w, b, gamma, beta, bn_param):
+  a, fc_cache = affine_forward(x, w, b)
+  norm_out, bn_cache = batchnorm_forward(a, gamma, beta, bn_param)
+  out, relu_cache = relu_forward(norm_out)
+  cache = (fc_cache, bn_cache, relu_cache)
+  return out, cache
+
+
+def affine_bn_relu_backward(dout, cache):
+  fc_cache, bn_cache, relu_cache = cache
+  da = relu_backward(dout, relu_cache)
+  dbn, dgamma, dbeta = batchnorm_backward(da, bn_cache)
+  dx, dw, db = affine_backward(dbn, fc_cache)
+  return dx, dw, db, dgamma, dbeta
+
 
 class FullyConnectedNet(object):
   """
@@ -184,6 +199,9 @@ class FullyConnectedNet(object):
         self.params['W%s' % i] = np.random.normal(
                 0, weight_scale, (input_dim if i == 1 else self.dims[i - 2] , self.dims[i - 1]))
         self.params['b%s' % i] = np.zeros(self.dims[i - 1])
+        if self.use_batchnorm:
+            self.params['gamma%s' % i] = np.ones(self.dims[i - 1])
+            self.params['beta%s' % i] = np.zeros(self.dims[i - 1])
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -204,7 +222,11 @@ class FullyConnectedNet(object):
     # pass of the second batch normalization layer, etc.
     self.bn_params = []
     if self.use_batchnorm:
-      self.bn_params = [{'mode': 'train'} for i in xrange(self.num_layers - 1)]
+      self.bn_params = [{
+          'mode': 'train',
+          'running_mean': np.zeros(self.dims[i]),
+          'running_var': np.zeros(self.dims[i]),
+      } for i in xrange(self.num_layers - 1)]
 
     # Cast all parameters to the correct datatype
     for k, v in self.params.iteritems():
@@ -224,9 +246,10 @@ class FullyConnectedNet(object):
     # behave differently during training and testing.
     if self.dropout_param is not None:
       self.dropout_param['mode'] = mode
+
     if self.use_batchnorm:
       for bn_param in self.bn_params:
-        bn_param[mode] = mode
+        bn_param['mode'] = mode
 
     scores = None
     ############################################################################
@@ -249,7 +272,12 @@ class FullyConnectedNet(object):
         if i == self.num_layers:
             scores, cache[i] = affine_forward(x, W, b)
         else:
-            x, cache[i] = affine_relu_forward(x, W, b)
+            if not self.use_batchnorm:
+                x, cache[i] = affine_relu_forward(x, W, b)
+            else:
+                gamma = self.params['gamma%s' % i]
+                beta = self.params['beta%s' % i]
+                x, cache[i] = affine_bn_relu_forward(x, W, b, gamma, beta, self.bn_params[i - 1])
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -282,10 +310,18 @@ class FullyConnectedNet(object):
     for i in range(self.num_layers, 0, -1):
         if i == self.num_layers:
             dx, dw, db = affine_backward(dx, cache[i])
+            grads['W%s' % i] = dw + self.reg * self.params['W%s' % i]
+            grads['b%s' % i] = db
         else:
-            dx, dw, db = affine_relu_backward(dx, cache[i])
-        grads['W%s' % i] = dw + self.reg * self.params['W%s' % i]
-        grads['b%s' % i] = db + self.reg * self.params['b%s' % i]
+            if not self.use_batchnorm:
+                dx, dw, db = affine_relu_backward(dx, cache[i])
+            else:
+                dx, dw, db, dgamma, dbeta = affine_bn_relu_backward(dx, cache[i])
+                grads['gamma%s' % i] = dgamma
+                grads['beta%s' % i] = dbeta
+
+            grads['W%s' % i] = dw + self.reg * self.params['W%s' % i]
+            grads['b%s' % i] = db
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
