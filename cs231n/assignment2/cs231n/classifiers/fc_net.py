@@ -266,6 +266,7 @@ class FullyConnectedNet(object):
     ############################################################################
     x = X
     cache = {}
+    dropout_cache = {}
     for i in range(1, self.num_layers + 1):
         W = self.params['W%s' % i]
         b = self.params['b%s' % i]
@@ -278,6 +279,8 @@ class FullyConnectedNet(object):
                 gamma = self.params['gamma%s' % i]
                 beta = self.params['beta%s' % i]
                 x, cache[i] = affine_bn_relu_forward(x, W, b, gamma, beta, self.bn_params[i - 1])
+            if self.use_dropout and mode == 'train':
+                x, dropout_cache[i] = dropout_forward(x, self.dropout_param)
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -313,6 +316,9 @@ class FullyConnectedNet(object):
             grads['W%s' % i] = dw + self.reg * self.params['W%s' % i]
             grads['b%s' % i] = db
         else:
+            if self.use_dropout:
+                dx = dropout_backward(dx, dropout_cache[i])
+
             if not self.use_batchnorm:
                 dx, dw, db = affine_relu_backward(dx, cache[i])
             else:
