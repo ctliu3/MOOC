@@ -29,9 +29,11 @@ def affine_forward(x, w, b):
   xshape = x.shape
   x = x.reshape(N, -1)
   out = np.zeros((N, M))
-  for c1 in range(N):
-      for c2 in range(M):
-          out[c1][c2] = sum(x[c1, :] * w[:, c2]) + b[c2]
+  out = x.dot(w) + b
+  # navie impl
+  # for c1 in range(N):
+      # for c2 in range(M):
+          # out[c1][c2] = sum(x[c1, :] * w[:, c2]) + b[c2]
   x = x.reshape(xshape)
   #############################################################################
   #                             END OF YOUR CODE                              #
@@ -62,16 +64,24 @@ def affine_backward(dout, cache):
   #############################################################################
   N = x.shape[0]
   D, M = w.shape
-  dx = np.zeros(x.shape).reshape(N, -1)
-  for c in range(N):
-      for i in range(D):
-          dx[c][i] = sum(w[i, :] * dout[c, :])
+
+  dx = dout.dot(w.T)
   dx = dx.reshape(x.shape)
-  dw = np.zeros_like(w)
-  x = x.reshape(N, -1)
-  for c in range(M):
-      for i in range(D):
-          dw[i][c] = sum(x[:, i] * dout[:, c])
+  # naive impl
+  # dx = np.zeros(x.shape).reshape(N, -1)
+  # for c in range(N):
+      # for i in range(D):
+          # dx[c][i] = sum(w[i, :] * dout[c, :])
+  # dx = dx.reshape(x.shape)
+
+  dw = x.reshape(N, -1).T.dot(dout)
+  # naive impl
+  # dw = np.zeros_like(w)
+  # x = x.reshape(N, -1)
+  # for c in range(M):
+      # for i in range(D):
+          # dw[i][c] = sum(x[:, i] * dout[:, c])
+
   db = np.sum(dout, axis=0)
   #############################################################################
   #                             END OF YOUR CODE                              #

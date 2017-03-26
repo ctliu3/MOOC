@@ -44,9 +44,9 @@ class TwoLayerNet(object):
     # weights and biases using the keys 'W1' and 'b1' and second layer weights #
     # and biases using the keys 'W2' and 'b2'.                                 #
     ############################################################################
-    self.params['W1'] = np.random.normal(0, weight_scale, (input_dim, hidden_dim))  # gaussian initialization
+    self.params['W1'] = weight_scale * np.random.randn(input_dim, hidden_dim)  # gaussian initialization
     self.params['b1'] = np.zeros(hidden_dim)
-    self.params['W2'] = np.random.normal(0, weight_scale, (hidden_dim, num_classes))
+    self.params['W2'] = weight_scale * np.random.randn(hidden_dim, num_classes)
     self.params['b2'] = np.zeros(num_classes)
     ############################################################################
     #                             END OF YOUR CODE                             #
@@ -77,9 +77,8 @@ class TwoLayerNet(object):
     # TODO: Implement the forward pass for the two-layer net, computing the    #
     # class scores for X and storing them in the scores variable.              #
     ############################################################################
-    affline1_output, affline1_cache = affine_forward(X, self.params['W1'], self.params['b1'])
-    relu_output, relu_cache = relu_forward(affline1_output)
-    scores, affline2_cache = affine_forward(relu_output, self.params['W2'], self.params['b2'])
+    hidden_layer_out, hidden_layer_cache = affine_relu_forward(X, self.params['W1'], self.params['b1'])
+    scores, affine_cache = affine_forward(hidden_layer_out, self.params['W2'], self.params['b2'])
     ############################################################################
     #                             END OF YOUR CODE                             #
     ############################################################################
@@ -100,13 +99,12 @@ class TwoLayerNet(object):
     # of 0.5 to simplify the expression for the gradient.                      #
     ############################################################################
     data_loss, softmax_gradient = softmax_loss(scores, y)
-    reg_loss = 0.5 * self.reg * (np.sum(self.params['W1']**2) +np.sum(self.params['W2']**2) )
+    reg_loss = 0.5 * self.reg * (np.sum(self.params['W1']**2) + np.sum(self.params['W2']**2) )
     loss = data_loss + reg_loss
 
-    affline2_gradient, dW2, db2 = affine_backward(softmax_gradient, affline2_cache)
+    dx, dW2, db2 = affine_backward(softmax_gradient, affine_cache)
     dW2 += self.reg * self.params['W2']
-    relu_gradient = relu_backward(affline2_gradient, relu_cache)
-    affline1_gradient, dW1, db1 = affine_backward(relu_gradient, affline1_cache)
+    dx, dW1, db1 = affine_relu_backward(dx, hidden_layer_cache)
     dW1 += self.reg * self.params['W1']
     grads = {
         'W1': dW1,
