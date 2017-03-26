@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def affine_forward(x, w, b):
   """
   Computes the forward pass for an affine (fully-connected) layer.
@@ -479,26 +478,27 @@ def conv_backward_naive(dout, cache):
   x, w, b, conv_param = cache
   stride, pad = conv_param['stride'], conv_param['pad']
 
-  N, C, W, H = x.shape
-  _, F, W2, H2 = dout.shape
+  N, C, H, W = x.shape
+  _, F, H2, W2 = dout.shape
   db = np.zeros_like(b)
-  dw = np.zeros_like(w)
   for i in range(F):
       db[i] = np.sum(dout[:, i, :, :])
 
-  pad_x = np.zeros((N, C, W + 2 * pad, H + 2 * pad))
-  pad_x[:, :, pad:-pad, pad:-pad] = x
-  for in_ind in range(C):
-      for out_ind in range(F):
+  dw = np.zeros_like(w)
+  x_pad = np.zeros((N, C, H + 2 * pad, W + 2 * pad))
+  x_pad[:, :, pad:-pad, pad:-pad] = x
+  # x_pad = np.pad(x, ((0,), (0,), (pad,), (pad,)), 'constant')
+  for out_ind in range(F):
+      for in_ind in range(C):
           for hind in range(w.shape[2]):
               for wind in range(w.shape[3]):
                   value = 0
                   for i in range(H2):
                       for j in range(W2):
-                          value += np.sum(dout[:,out_ind,i,j] * pad_x[:,in_ind,hind*stride+i, wind*stride+j])
+                          value += np.sum(dout[:,out_ind,i,j] * x_pad[:,in_ind,hind+stride*i, wind+stride*j])
                   dw[out_ind, in_ind, hind, wind] += value
 
-  dx = np.zeros_like(pad_x)
+  dx = np.zeros_like(x_pad)
   for out_ind in range(F):
       for out_h_ind in range(H2):
           for out_w_ind in range(W2):
