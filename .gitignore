@@ -105,3 +105,7 @@ target/
 
 cs231n/assignment2/cs231n/build
 cs231n/assignment2/cs231n/datasets/cifar-10-batches-py
+cs231n/assignment3/cs231n/build
+cs231n/assignment3/cs231n/datasets/*
+!cs231n/assignment3/cs231n/datasets/*.sh
+
