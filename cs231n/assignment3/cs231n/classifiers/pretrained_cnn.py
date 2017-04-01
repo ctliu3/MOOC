@@ -12,7 +12,7 @@ class PretrainedCNN(object):
     self.conv_params = []
     self.input_size = input_size
     self.num_classes = num_classes
-    
+
     # TODO: In the future it would be nice if the architecture could be loaded from
     # the HDF5 file rather than being hardcoded. For now this will have to do.
     self.conv_params.append({'stride': 2, 'pad': 2})
